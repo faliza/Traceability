@@ -1,0 +1,100 @@
+// SPDX-License-Identifier: MIT 
+pragma solidity >=0.8.0 <0.9.0; 
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+
+contract p1{
+     function getPrice() public view returns(uint256){
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(0x8A753747A1Fa494EC906cE90E9f37563A8AF630e);
+        (,int256 answer,,,) = priceFeed.latestRoundData();
+         // ETH/USD rate in 18 digit 
+         return uint256(answer * 10000000000);
+    }
+struct component{
+        uint id;
+        string name;
+        string MaterialOrigin;
+        string AvailableAt;
+        string ManufactureOrigin;
+        uint256 Price;//$
+    }
+    uint128 public ComponentCount;
+    address public owner;
+    constructor(){
+        owner=msg.sender;
+    }
+    mapping(uint=>component) public Component;
+    
+    component[]  Car;
+    function AddComponent(uint _id ,string memory _name  )public returns(string memory){
+        require(msg.sender==owner,"Error");
+        
+        Component[_id]=component(_id ,_name,"empty","empty","empty",0);
+        component memory c = component(_id ,_name,"empty","empty","empty",0); // This declaration shadows an existing declaration.
+        Car.push(c);
+        ComponentCount++;
+        return "Done!";
+    }
+     function View() public view returns (uint[] memory, string[] memory){
+      uint[]    memory id = new uint[](ComponentCount);
+      string[]  memory name = new string[](ComponentCount);
+
+      for (uint i = 0; i < ComponentCount; i++) {
+          
+          id[i] = Car[i].id;
+          name[i] = Car[i].name;
+        
+          
+      }
+
+      return (id,name);
+
+  }
+    function AddPrice(uint _id ,uint256 _price  )public returns(string memory){
+        require(msg.sender==owner,"Error");
+        
+        Component[_id].Price=_price;
+        return "Done!";
+    }
+    function AddMaterialOrigin(uint _id ,string memory _Ori  )public returns(string memory){
+        require(msg.sender==owner,"Error");
+        
+        Component[_id].MaterialOrigin=_Ori;
+        return "Done!";
+    }
+     function AddAvailabaleAt(uint _id ,string memory _Ava  )public returns(string memory){
+        require(msg.sender==owner,"Error");
+        
+        Component[_id].AvailableAt=_Ava;
+        return "Done!";
+    }
+     function AddManufactureOrigin(uint _id ,string memory _Manu  )public returns(string memory){
+        require(msg.sender==owner,"Error");
+        
+        Component[_id].ManufactureOrigin=_Manu;
+        return "Done!";
+    }
+    //wei
+    function PriceInEth(uint256 _id) public view returns (uint256){
+        uint256 ethPrice = getPrice() / 1000000000000000000;
+        
+        uint256 UsdAmount=Component[_id].Price;
+        ///5 ragham ashar
+        uint256 UsdAmountInEth = (UsdAmount*1000000000000000000 /ethPrice) ;
+        // the actual ETH/USD conversation rate, after adjusting the extra 0s.
+        return UsdAmountInEth;
+    }
+    // function View()  view public returns(uint[] memory){
+    //     for(uint i=1;i<=ComponentCount;i++)
+    //     {
+    //        return Car[i].name ;
+    //     }
+         
+
+    // }
+
+
+
+
+
+    
+}
