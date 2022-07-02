@@ -1,0 +1,173 @@
+// SPDX-License-Identifier: MIT 
+pragma solidity >=0.8.0 <0.9.0; 
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+
+
+contract p2{
+    function getPrice() public view returns(uint256){ 
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(0x8A753747A1Fa494EC906cE90E9f37563A8AF630e); 
+        (,int256 answer,,,) = priceFeed.latestRoundData(); 
+         // ETH/USD rate in 18 digit  
+         return uint256(answer * 10000000000); 
+    } 
+    // Wei 
+    function getConversionRate(uint256 ethAmount) public view returns (uint256){ 
+        uint256 ethPrice = getPrice(); 
+        uint256 ethAmountInUsd = (ethPrice * ethAmount) / 1000000000000000000; 
+        // the actual ETH/USD conversation rate, after adjusting the extra 0s. 
+        return ethAmountInUsd; 
+    } 
+uint256 id;
+address  public Engineer=0xf3705b8069a9377E0AC73f03d5d34AEf0eFE08f2;
+address  public LineManager=0xf3705b8069a9377E0AC73f03d5d34AEf0eFE08f2;
+address  public InventoryManager=0xf3705b8069a9377E0AC73f03d5d34AEf0eFE08f2;
+string public SPstate="None";
+event PR(address indexed _from,uint _id,string  _SPState,string result);
+
+
+//submiting a purchase request
+function SPR (string memory _SPState,uint256 _id )public returns(string memory){
+    id=_id ; 
+    if(msg.sender==Engineer)
+    {
+        if(keccak256(abi.encodePacked(_SPState)) == keccak256(abi.encodePacked("NeedsPR")))
+        {
+           _SPState="PRsubmited"; 
+           SPstate=_SPState;
+           emit  PR(msg.sender,id,SPstate,"PRsubmited succsessfully");
+           return "SPState=PRsubmited";
+        }
+        else{
+            SPstate="NeedsPR";
+            emit  PR(msg.sender,id,SPstate,"PRsubmited failed");
+            return "error";
+        }
+
+    }
+    else{
+        SPstate="NeedsPR";
+        emit  PR(msg.sender,id,SPstate,"PRsubmited failed");
+        return "error address doesn't match the Engineer address ";
+    }
+    
+ }
+ //Aproving the purchase request
+ function APR (bool result )public returns(string memory){
+ 
+    if(msg.sender==LineManager){
+        if(keccak256(abi.encodePacked(SPstate)) == keccak256(abi.encodePacked("PRsubmited")))
+        {
+            if(result==true)
+            {
+               SPstate="PRapproved";  
+               emit  PR(msg.sender,id,SPstate,"PRapproved succsessfully");
+               return "SPState=PRapproved";
+            }
+            else{
+                 SPstate="PRsubmited";  
+               emit  PR(msg.sender,id,SPstate,"PRapproved failed");
+               return "SPState=PRsubmited";
+            }
+        }
+        else{
+        SPstate="PRsubmited";
+        emit  PR(msg.sender,id,SPstate,"PRapproved failed");
+        return "error address doesn't match the LineManager address ";
+    }
+
+    }
+
+
+
+
+    }
+    //Confirming the Unavailability of the Spare Part Locally
+    function CUS (bool result )public returns(string memory){
+       if(msg.sender==InventoryManager){
+        if(keccak256(abi.encodePacked(SPstate)) == keccak256(abi.encodePacked("PRapproved")))
+        {
+            if(result==true)
+            {
+               SPstate="NotAvailabaleLocally";  
+               emit  PR(msg.sender,id,SPstate,"NotAvailabaleLocally");
+               return "SPState=NotAvailabaleLocally";
+            }
+            else{
+                 SPstate="PRapproved";  
+               emit  PR(msg.sender,id,SPstate,"AvailabaleLocally");
+               return "SPState=PRapproved";
+            }
+        }
+        else{
+        SPstate="PRapproved";
+        emit  PR(msg.sender,id,SPstate,"failed");
+        return "error address doesn't match the InventoryManager address ";
+    }
+
+    }  
+    }
+    // Submitting the Evaluation Result
+       function SER (bool result,uint256 supplierCode )public returns(string memory){
+       if(msg.sender==Engineer){
+        if(keccak256(abi.encodePacked(SPstate)) == keccak256(abi.encodePacked("NotAvailabaleLocally")))
+        {
+            if(result==true)
+            {
+               SPstate="EvaluationSubmitted.";  
+               emit  PR(msg.sender,id,SPstate,"EvaluationSubmitted.");
+               return "SPState=EvaluationSubmitted.";
+            }
+            else{
+                 SPstate="NotAvailabaleLocally";  
+               emit  PR(msg.sender,id,SPstate,"Evaluation Failed");
+               return "SPState=NotAvailabaleLocally";
+            }
+        }
+        else{
+        SPstate="NotAvailabaleLocally";
+        emit  PR(msg.sender,id,SPstate,"failed");
+        return "error address doesn't match the Engineer address ";
+    }
+
+    }  
+    }
+    // Approving the Evaluation
+          function AE (bool result,uint256 supplierCode )public returns(string memory){
+       if(msg.sender==LineManager){
+        if(keccak256(abi.encodePacked(SPstate)) == keccak256(abi.encodePacked("EvaluationSubmitted")))
+        {
+            if(result==true)
+            {
+               SPstate="EvaluationApproved.";  
+               emit  PR(msg.sender,id,SPstate,"EvaluationApproved.");
+               return "SPState=EvaluationApproved.";
+            }
+            else{
+                 SPstate="EvaluationSubmitted";  
+               emit  PR(msg.sender,id,SPstate,"Evaluation Not Approved");
+               return "SPState=EvaluationSubmitted";
+            }
+        }
+        else{
+        SPstate="EvaluationSubmitted";
+        emit  PR(msg.sender,id,SPstate,"failed");
+        return "error address doesn't match the Line manager address ";
+    }
+       }
+          }
+          
+    //wei
+    uint256 public deposit;
+    address public buyer;
+    function Deposit() public payable {
+      deposit=msg.value;
+      buyer=msg.sender;
+
+    // buyer.transfer(deposit);
+
+    }
+  
+    
+    
+}
+    
